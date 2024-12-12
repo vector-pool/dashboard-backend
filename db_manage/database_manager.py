@@ -42,21 +42,68 @@ def create_tables(conn):
         CREATE TABLE IF NOT EXISTS miner_status (
             id SERIAL PRIMARY KEY,
             miner_uid INTEGER NOT NULL UNIQUE,
-            total_storage_size FLOAT NOT NULL,
-            request_cicle_score FLOAT NOT NULL,
+            total_storage_size DOUBLE PRECISION NOT NULL,
+            incentive DOUBLE PRECISION NOT NULL,
         )
         """,
         """
         CREATE TABLE IF NOT EXISTS operations (
             id SERIAL PRIMARY KEY,
             miner_uid INTEGER NOT NULL REFERENCES miner_status(miner_uid),
+            validator VARCHAT(255) NOT NULL,
             request_type VARCHAR(255) NOT NULL,
             s_f VARCHAR(255) NOT NULL,
-            timestamp
+            score DOUBLE PRECISION NOT NULL,
+            timestamp TIMESTAMP NOT NULL,
+            request_cicle_score DOUBLE PRECISION,
         )
         """,
     )
     with conn.cursor() as cur:
         for command in commands:
             cur.execute(command)
+        conn.commit()
+
+def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentive: float):
+    """Insert or update the miner_status table."""
+    with conn.cursor() as cur:
+        # Check if the miner_uid already exists
+        cur.execute("""
+            SELECT 1 FROM miner_status WHERE miner_uid = %s
+        """, (miner_uid,))
+        
+        exists = cur.fetchone()
+        
+        if exists:
+            # Update existing record
+            cur.execute("""
+                UPDATE miner_status
+                SET total_storage_size = %s,
+                    incentive = %s
+                WHERE miner_uid = %s
+            """, (total_storage_size, incentive, miner_uid))
+        else:
+            # Insert new record
+            cur.execute("""
+                INSERT INTO miner_status (miner_uid, total_storage_size, incentive)
+                VALUES (%s, %s, %s)
+            """, (miner_uid, total_storage_size, incentive))
+        
+        # Commit the transaction
+        conn.commit()
+        
+def write_operations(conn, operations_list: list):
+    """Insert multiple rows into the operations table."""
+    with conn.cursor() as cur:
+        # Prepare the SQL statement for inserting data
+        insert_query = """
+            INSERT INTO operations (miner_uid, validator, request_type, s_f, score, timestamp, request_cicle_score)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        # Execute the insert statement for each pair in the list
+        for operation in operations_list:
+            cur.execute(insert_query, operation)
+        
+        # Commit the transaction
         conn.commit()
