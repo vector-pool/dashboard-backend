@@ -1,16 +1,18 @@
-from fastapi import Depends, Header, HTTPException
-
+from fastapi import Header, HTTPException, Request
 from utils import constants as cst
+from hashlib import sha256
+from typing import Optional
+from substrateinterface import Keypair
+from datetime import datetime
 from utils.logging_utils import get_logger
 import yaml
 
 logger = get_logger(__name__)
 
-from fastapi import APIRouter, Request, HTTPException, Depends
-from typing import Optional
-from hashlib import sha256
-from substrateinterface import Keypair
-from datetime import datetime
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+white_validator_hotkeys = config.get("white_validator_hotkeys", [])
 
 async def verify_request(request: Request) -> None:
     headers = request.headers
@@ -63,7 +65,6 @@ async def _verify_request_internal(
 async def white_list(
     validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
 ):
-    white_validator_hotkeys = yaml.safe_load("config.yaml")
     if validator_hotkey not in white_validator_hotkeys:
         logger.debug("Authentication failed: Hotkey not found in the whitelist.")
         raise HTTPException(

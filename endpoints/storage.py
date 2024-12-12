@@ -17,6 +17,8 @@ async def handle_miner_data(
 ):
     # Log the encrypted payload received
     payload = await request.body()
+    
+    return "get the request correctly"
 
 
 
