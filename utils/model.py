@@ -8,9 +8,7 @@ class Operation(BaseModel):
     timestamp: str
 
 class MinerData(BaseModel):
-    miner_uid: str
+    miner_uid: int
     total_storage_size: float
     operations: List[Operation]
-    token: str
-    nonce: Optional[str] = None  # Nonce for preventing replay attacks
     request_cycle_score: float
