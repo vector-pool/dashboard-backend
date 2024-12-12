@@ -14,8 +14,6 @@ class ContentModel(BaseModel):
 async def handle_miner_data(
     request: Request,
     validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
-    miner_hotkey: str = Header(..., alias=cst.MINER_HOTKEY),
-    symmetric_key_uuid=Header(..., alias=cst.SYMMETRIC_KEY_UUID),
 ):
     # Log the encrypted payload received
     payload = await request.body()
