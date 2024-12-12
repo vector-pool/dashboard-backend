@@ -18,21 +18,8 @@ async def handle_miner_data(
     symmetric_key_uuid=Header(..., alias=cst.SYMMETRIC_KEY_UUID),
 ):
     # Log the encrypted payload received
-    encrypted_payload = await request.body()
-    print("Encrypted Payload (raw):", encrypted_payload)
+    payload = await request.body()
 
-    # Decrypt the payload directly
-
-    # Log the decrypted payload
-    if decrypted_payload:
-        print("Decrypted Payload (parsed):", decrypted_payload.dict())
-    else:
-        print("Failed to decrypt payload. Check symmetric key or decryption logic.")
-
-    print("The synapse received")
-
-    return decrypted_payload
-    # return {"status": "Example request received, haha"}
 
 
 def stogate_router() -> APIRouter:

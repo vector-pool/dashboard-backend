@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from utils.logging_utils import get_logger
+import threading
+from contextlib import asynccontextmanager
 
 logger = get_logger(__name__)
 
@@ -10,8 +12,8 @@ def factory_app(debug: bool = False) -> FastAPI:
         # metagraph = config.metagraph
         sync_thread = None
         # if metagraph.substrate is not None:
-            # sync_thread = threading.Thread(target=metagraph.periodically_sync_nodes, daemon=True)
-            # sync_thread.start()
+        # sync_thread = threading.Thread(target= None, daemon=True)
+        sync_thread.start()
 
         yield
 
