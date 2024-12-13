@@ -1,23 +1,29 @@
 from fastapi import FastAPI
 from utils.logging_utils import get_logger
-import threading
 from contextlib import asynccontextmanager
-from db_manage.database_manager import initialize_database, maintain_database
+import asyncio
+from db_manage.database_manager import startup_db_manager, shutdown_db_manager, maintain_database
+
 logger = get_logger(__name__)
 
 def factory_app(debug: bool = False) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        initialize_database()
-        maintenance_thread = None
-        maintenance_thread = threading.Thread(target=maintain_database, daemon=True)
-        maintenance_thread.start()
 
+        db_pool = startup_db_manager()
+        
+        # Start the maintenance task
+        maintenance_task = asyncio.create_task(maintain_database(db_pool))
+        
         yield
-
+        
         logger.info("Shutting down...")
-
-        maintenance_thread.join()
+        
+        # Cancel the maintenance task
+        maintenance_task.cancel()
+        await maintenance_task
+        
+        await shutdown_db_manager
 
     app = FastAPI(lifespan=lifespan, debug=debug)
 
