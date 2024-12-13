@@ -9,8 +9,8 @@ from utils.logging_utils import get_logger
 logger = get_logger(__name__)
 
 load_dotenv()
-db_user_name = os.getenv("POSTGRESQL_VALIDATOR_USER_NAME")
-password = os.getenv("VALI_DB_PASSWORD")
+db_user_name = os.getenv("POSTGRESQL_USER_NAME")
+password = os.getenv("DB_PASSWORD")
 db_port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 
@@ -44,6 +44,8 @@ def create_tables(conn):
             miner_uid INTEGER NOT NULL UNIQUE,
             total_storage_size DOUBLE PRECISION NOT NULL,
             incentive DOUBLE PRECISION NOT NULL,
+            weight DOUBLE PRECISION NOT NULL,
+            passed_request_count INTEGER NOT NULL,
         )
         """,
         """
@@ -64,7 +66,7 @@ def create_tables(conn):
             cur.execute(command)
         conn.commit()
 
-def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentive: float):
+def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentive: float, weight: float, passed_request_count: int):
     """Insert or update the miner_status table."""
     with conn.cursor() as cur:
         # Check if the miner_uid already exists
@@ -79,15 +81,17 @@ def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentiv
             cur.execute("""
                 UPDATE miner_status
                 SET total_storage_size = %s,
-                    incentive = %s
+                    incentive = %s,
+                    weight = %s,
+                    passed_request_count = %s
                 WHERE miner_uid = %s
-            """, (total_storage_size, incentive, miner_uid))
+            """, (total_storage_size, incentive, miner_uid, weight, passed_request_count))
         else:
             # Insert new record
             cur.execute("""
-                INSERT INTO miner_status (miner_uid, total_storage_size, incentive)
+                INSERT INTO miner_status (miner_uid, total_storage_size, incentive, weight, passed_request_count)
                 VALUES (%s, %s, %s)
-            """, (miner_uid, total_storage_size, incentive))
+            """, (miner_uid, total_storage_size, incentive, weight, passed_request_count))
         
         # Commit the transaction
         conn.commit()
