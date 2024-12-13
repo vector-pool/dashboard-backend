@@ -8,8 +8,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-db_user_name = os.getenv("POSTGRESQL_USER_NAME")
-password = os.getenv("DB_PASSWORD")
+db_user_name = os.getenv("POSTGRESQL_VALIDATOR_USER_NAME")
+password = os.getenv("VALI_DB_PASSWORD")
 db_port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 
@@ -75,7 +75,7 @@ async def create_tables(pool):
             s_f VARCHAR(255) NOT NULL,
             score DOUBLE PRECISION NOT NULL,
             timestamp TIMESTAMP NOT NULL,
-            request_cicle_score DOUBLE PRECISION
+            request_cycle_score DOUBLE PRECISION
         )
         """,
     ]

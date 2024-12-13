@@ -26,7 +26,7 @@ async def verify_request(request: Request) -> None:
     signed_by = headers.get("Signed-By")
     now = round(datetime.utcnow().timestamp() * 1000)
 
-    error_message = _verify_request_internal(
+    error_message = await _verify_request_internal(
         signature, body, timestamp, uuid, signed_for, signed_by, now
     )
     
@@ -57,14 +57,12 @@ async def _verify_request_internal(
     except json.JSONDecodeError:
         return "Invalid JSON body"
     
-    # Validate expected values in the body
-    expected_keys = ["miner_uid", "total_storage_size", "weight", "request_cicle_score", "passed_request_count", "operations"]
+    # {'miner_uid': 5, 'total_storage_size': 0.007231179624795914, 'operations': [{'request_type': 'create', 'S_F': 'success', 'score': 1.0, 'timestamp': '2024-12-13T18:29:37.549819'}], 'request_cycle_score': 0.021875000000000002, 'weight': 1.0, 'passed_request_count': 248}
+    expected_keys = ["miner_uid", "total_storage_size", "weight", "request_cycle_score", "passed_request_count", "operations"]
     for key in expected_keys:
         if key not in body_data:
             return f"Missing expected body value: {key}"
-
     operations = body_data["operations"]
-    
     if len(operations) == 0:
         return "The body data don't contains any operation info."
     expected_operation_keys = ["timestamp", "request_type", "s_f", "score"]
@@ -77,17 +75,16 @@ async def _verify_request_internal(
     keypair = Keypair(ss58_address=signed_by)
     if timestamp + ALLOWED_DELTA_MS < now:
         return "Request is too stale"
-    
     message = f"{sha256(body).hexdigest()}.{uuid}.{timestamp}.{signed_for}"
     verified = keypair.verify(message, signature)
     if not verified:
         return "Signature Mismatch"
-    
+    print("Verified Signature")
     return None
 
 
 async def white_list(
-    validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
+    validator_hotkey: str = Header(..., alias=cst.SIGNED_BY),
 ):
     if validator_hotkey not in white_validator_hotkeys:
         logger.debug("Authentication failed: Hotkey not found in the whitelist.")
@@ -95,4 +92,4 @@ async def white_list(
             status_code=401,
             detail="Validator not registered with subnet owner. Please contact the subnet owner to whitelist your hotkey.",
         )
-    print(validator_hotkey)
+    print("Verified whitelist")

@@ -10,7 +10,7 @@ def factory_app(debug: bool = False) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
 
-        db_pool = startup_db_manager()
+        db_pool = await startup_db_manager()
         
         # Start the maintenance task
         maintenance_task = asyncio.create_task(maintain_database(db_pool))

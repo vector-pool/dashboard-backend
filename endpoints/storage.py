@@ -6,6 +6,7 @@ from dependencies.dependencies import white_list, verify_request
 from utils import constants as cst
 from utils.logging_utils import get_logger
 import bittensor as bt
+from datetime import datetime
 from db_manage.database_manager import (
     write_miner_status,
     write_operations,
@@ -14,28 +15,32 @@ from db_manage.database_manager import (
 from dotenv import load_dotenv
 import os
 
-
 load_dotenv()
-
-subtensor_url = os.getenv("SUBTENSOR_ADDRESS")
-subtensor_network = os.getenv("SUBTENSOR_NETWORK")
-netuid = os.getenv("NETUID")
 
 logger = get_logger(__name__)
 
 async def handle_miner_data(
     request: Request,
-    validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
+    validator_hotkey: str = Header(..., alias=cst.SIGNED_BY),
 ):
+    
+    print("GETTING REQUEST.")
     # Log the encrypted payload received
     payload = await request.json()  # Use .json() to parse JSON payload
-
+    
+    subtensor_url = os.getenv("SUBTENSOR_ADDRESS")
+    subtensor_network = os.getenv("SUBTENSOR_NETWORK")
+    netuid = os.getenv("NETUID")
+    
     miner_uid = payload["miner_uid"]
     total_storage_size = payload["total_storage_size"]
     weight = payload["weight"] 
-    request_cicle_score = payload["request_cicle_score"]
+    request_cycle_score = payload["request_cycle_score"]
     passed_request_count = payload["passed_request_count"]
 
+    if not isinstance(netuid, int):
+        netuid = int(netuid)
+    
     neuron_info = bt.subtensor(network=subtensor_network).neuron_for_uid(miner_uid, netuid)
 
     incentive = neuron_info.incentive
@@ -56,16 +61,14 @@ async def handle_miner_data(
         request_type = operation["request_type"]
         s_f = operation["s_f"]
         score = operation["score"]
-        timestamp = operation["timestamp"]
-        if request_type != "read":
-            ops.append((miner_uid, validator_hotkey, request_type, s_f, score, timestamp))
-        else:
-            ops.append((miner_uid, validator_hotkey, request_type, s_f, score, timestamp, request_cicle_score))
+        timestamp = datetime.fromisoformat(operation["timestamp"])
+        ops.append((miner_uid, validator_hotkey, request_type, s_f, score, timestamp, request_cycle_score))
 
+    print(ops)
     # Use the global db_pool initialized in your startup event
     db_pool = await connect_to_db()
     
-    async with db_pool.acquire() as conn:
+    async with db_pool as conn:
         await write_miner_status(
             conn, miner_uid, coldkey, hotkey, ip, port, incentive, trust,
             daily_rewards, passed_request_count, weight, total_storage_size
