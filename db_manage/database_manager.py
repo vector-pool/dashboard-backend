@@ -42,10 +42,16 @@ def create_tables(conn):
         CREATE TABLE IF NOT EXISTS miner_status (
             id SERIAL PRIMARY KEY,
             miner_uid INTEGER NOT NULL UNIQUE,
-            total_storage_size DOUBLE PRECISION NOT NULL,
+            coldkey VARCHAR(255) NOT NULL,
+            hotkey VARCHAR(255) NOT NULL,
+            ip VARCHAT(255) NOT NULL,
+            port INTEGER NOT NULL,
             incentive DOUBLE PRECISION NOT NULL,
-            weight DOUBLE PRECISION NOT NULL,
+            trust DOUBLE PRECISION NOT NULL,
+            daily_rewards PRECISION NOT NULL,
             passed_request_count INTEGER NOT NULL,
+            weight DOUBLE PRECISION NOT NULL,
+            total_storage_size DOUBLE PRECISION NOT NULL,
         )
         """,
         """
@@ -66,7 +72,7 @@ def create_tables(conn):
             cur.execute(command)
         conn.commit()
 
-def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentive: float, weight: float, passed_request_count: int):
+def write_miner_status(conn, miner_uid: int, coldkey: str, hotkey: str, ip: str, port: int, incentive: float, trust: float, daily_rewards: float, passed_request_count: int, weight: float, total_storage_size: float):
     """Insert or update the miner_status table."""
     with conn.cursor() as cur:
         # Check if the miner_uid already exists
@@ -80,20 +86,25 @@ def write_miner_status(conn, miner_uid: int, total_storage_size: float, incentiv
             # Update existing record
             cur.execute("""
                 UPDATE miner_status
-                SET total_storage_size = %s,
+                SET coldkey = %s,
+                    hotkey = %s,
+                    ip = %s,
+                    port = %s,
                     incentive = %s,
-                    weight = %s,
+                    trusts = %s,
+                    daily_rewards = %s,
                     passed_request_count = %s
+                    weight = %s,
+                    total_storage_size = %s,
                 WHERE miner_uid = %s
-            """, (total_storage_size, incentive, miner_uid, weight, passed_request_count))
+            """, (coldkey, hotkey, ip, port, incentive, trust, daily_rewards, passed_request_count, weight, total_storage_size, miner_uid))
         else:
             # Insert new record
             cur.execute("""
-                INSERT INTO miner_status (miner_uid, total_storage_size, incentive, weight, passed_request_count)
-                VALUES (%s, %s, %s)
-            """, (miner_uid, total_storage_size, incentive, weight, passed_request_count))
+                INSERT INTO miner_status (miner_uid, coldkey, hotkey, ip, port, incentive, trust, daily_rewards, passed_request_count, weight, total_storage_size)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (miner_uid, coldkey, hotkey, ip, port, incentive, trust, daily_rewards, passed_request_count, weight, total_storage_size))
         
-        # Commit the transaction
         conn.commit()
         
 def write_operations(conn, operations_list: list):

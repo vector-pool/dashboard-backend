@@ -39,11 +39,16 @@ async def handle_miner_data(
     request_cicle_score = payload["request_cicle_score"]
     passed_request_count = payload["passed_request_count"]
     
-    metagraph = bt.subtensor(network = subtensor_network).metagraph(netuid)
+    neuron_info = bt.subtensor(network = subtensor_network).neuron_for_uid(miner_uid, netuid)
     
-    incentive = metagraph.I[miner_uid]
-    
-    trust = metagraph.T[miner_uid]
+    incentive = neuron_info.incentive
+    trust = neuron_info.trust
+    coldkey = neuron_info.coldkey
+    hotkey = neuron_info.hotkey
+    ip = neuron_info.axon_info.ip
+    port = neuron_info.axon_info.port
+    emission = neuron_info.emission
+    daily_rewards = emission * 20
     
     miner_status = (miner_uid, total_storage_size, incentive, weight, passed_request_count)
     
@@ -66,7 +71,7 @@ async def handle_miner_data(
     
     create_tables(conn)
     
-    write_miner_status(conn, miner_uid, total_storage_size, incentive, weight, passed_request_count)
+    write_miner_status(conn, miner_uid, coldkey, hotkey, ip, port, incentive, trust, daily_rewards, passed_request_count, weight, total_storage_size)
     
     write_operations(conn, ops)
     

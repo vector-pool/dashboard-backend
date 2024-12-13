@@ -27,8 +27,11 @@ def check_miner_status():
     
     print(miner_cur_status)
     
+    neuron_info = bt.subtensor(network = subtensor_network).neuron_for_uid(5, 251)
+    print("***********")
+    print(neuron_info.axon_info.ip)
     metagraph = bt.subtensor(network = subtensor_network).metagraph(netuid)
-    print(metagraph)
+    # print(metagraph.__dict__)
     incen = metagraph.I[0]
     print(incen)
     miner_pre_status = []
