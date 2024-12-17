@@ -1,26 +1,29 @@
 from fastapi import FastAPI
 from utils.logging_utils import get_logger
+from contextlib import asynccontextmanager
+import asyncio
+from db_manage.database_manager import startup_db_manager, shutdown_db_manager, maintain_database
 
 logger = get_logger(__name__)
 
 def factory_app(debug: bool = False) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # config = configuration.factory_config()
-        # metagraph = config.metagraph
-        sync_thread = None
-        # if metagraph.substrate is not None:
-            # sync_thread = threading.Thread(target=metagraph.periodically_sync_nodes, daemon=True)
-            # sync_thread.start()
 
+        db_pool = await startup_db_manager()
+        
+        # Start the maintenance task
+        maintenance_task = asyncio.create_task(maintain_database(db_pool))
+        
         yield
-
+        
         logger.info("Shutting down...")
-
-        # config.encryption_keys_handler.close()
-        # metagraph.shutdown()
-        # if metagraph.substrate is not None and sync_thread is not None:
-        #     sync_thread.join()
+        
+        # Cancel the maintenance task
+        maintenance_task.cancel()
+        await maintenance_task
+        
+        await shutdown_db_manager
 
     app = FastAPI(lifespan=lifespan, debug=debug)
 

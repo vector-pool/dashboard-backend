@@ -5,7 +5,7 @@ HOTKEY = "hotkey"
 MINER_HOTKEY = "miner-hotkey"
 VALIDATOR_HOTKEY = "validator-hotkey"
 NEURON_INFO_LITE = "NeuronInfoLite"
-
+SIGNED_BY = "Signed-By"
 FINNEY_NETWORK = "finney"
 FINNEY_TEST_NETWORK = "test"
 FINNEY_SUBTENSOR_ADDRESS = "wss://entrypoint-finney.opentensor.ai:443"
